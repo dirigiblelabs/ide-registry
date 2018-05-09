@@ -40,11 +40,12 @@ UriBuilder.prototype.build = function(){
 /**
  * Registry Service API delegate
  */
-var RegistryService = function($http, $window, registryServiceUrl, treeCfg){
+var RegistryService = function($http, $window, registryServiceUrl, repositoryServiceUrl, treeCfg){
 
 	this.$http = $http;
 	this.$window = $window;
 	this.registryServiceUrl = registryServiceUrl;
+	this.repositoryServiceUrl = repositoryServiceUrl;
 	this.typeMapping = treeCfg['types'];
 	
 	this.newResourceName = function(name, type, siblingResourcenames){
@@ -140,7 +141,8 @@ var RegistryService = function($http, $window, registryServiceUrl, treeCfg){
 };
 
 RegistryService.prototype.remove = function(resourcepath){
-	var url = new UriBuilder().path(this.registryServiceUrl.split('/')).path(resourcepath.split('/')).build();
+	resourcepath = resourcepath.replace('/registry/', '/registry/public/');
+	var url = new UriBuilder().path(this.repositoryServiceUrl.split('/')).path(resourcepath.split('/')).build();
 	return this.$http['delete'](url);
 };
 RegistryService.prototype.load = function(registryResourcePath){
@@ -296,6 +298,7 @@ RegistryTreeAdapter.prototype.inspect = function(resource){
 
 angular.module('registry.config', [])
 	.constant('REGISTRY_SVC_URL','/services/v3/core/registry')
+	.constant('REPOSITORY_SVC_URL','/services/v3/core/repository')
 	
 angular.module('registry', ['registry.config'])
 .config(['$httpProvider', function($httpProvider) {
@@ -315,16 +318,27 @@ angular.module('registry', ['registry.config'])
 	var send = function(evtName, data, absolute){
 		messageHub.post({data: data}, 'repository.' + evtName);	
 	};
+	
+	var transformDescriptor = function(resourceDescriptor) {
+		var resourceDescriptorRepository = JSON.parse(JSON.stringify(resourceDescriptor));
+		resourceDescriptorRepository.path = resourceDescriptorRepository.path.replace('/registry/', '/registry/public/');
+		return resourceDescriptorRepository;
+	};
+	
 	var announceResourceSelected = function(resourceDescriptor){
-		this.send('resource.selected', resourceDescriptor);
+		var resourceDescriptorRepository = transformDescriptor(resourceDescriptor);
+		this.send('resource.selected', resourceDescriptorRepository);
 	};
 	var announceResourceOpen = function(resourceDescriptor){
-		resourceDescriptor.path = resourceDescriptor.path.replace('/registry/', '/registry/public/');
-		this.send('resource.open', resourceDescriptor);
+		var resourceDescriptorRepository = transformDescriptor(resourceDescriptor);
+		this.send('resource.open', resourceDescriptorRepository);
 	};
 	var announceResourceDeleted = function(resourceDescriptor){
-		this.send('resource.deleted', resourceDescriptor);
+		var resourceDescriptorRepository = transformDescriptor(resourceDescriptor);
+		this.send('resource.deleted', resourceDescriptorRepository);
 	};
+	
+	
 	
 	return {
 		send: send,
@@ -427,8 +441,8 @@ angular.module('registry', ['registry.config'])
 		}
 	}
 }])
-.factory('registryService', ['$http', '$window', 'REGISTRY_SVC_URL', '$treeConfig', function($http, $window, REGISTRY_SVC_URL, $treeConfig){
-	return new RegistryService($http, $window, REGISTRY_SVC_URL, $treeConfig);
+.factory('registryService', ['$http', '$window', 'REGISTRY_SVC_URL', 'REPOSITORY_SVC_URL', '$treeConfig', function($http, $window, REGISTRY_SVC_URL, REPOSITORY_SVC_URL, $treeConfig){
+	return new RegistryService($http, $window, REGISTRY_SVC_URL, REPOSITORY_SVC_URL, $treeConfig);
 }])
 .factory('registryTreeAdapter', ['$treeConfig', 'registryService', '$messageHub', function($treeConfig, RegistryService, $messageHub){
 	return new RegistryTreeAdapter($treeConfig, RegistryService, $messageHub);
