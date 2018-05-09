@@ -139,37 +139,6 @@ var RegistryService = function($http, $window, registryServiceUrl, treeCfg){
 	}
 };
 
-RegistryService.prototype.createCollection = function(type){
-	var inst = $.jstree.reference(data.reference),
-		obj = inst.get_node(data.reference);
-	var node_tmpl = {
-		type: 'collection',
-		text: this.newResourceName('collection', 'collection')
-	}
-	inst.create_node(obj, node_tmpl, "last", function (new_node) {
-		setTimeout(function () { inst.edit(new_node); },0);
-	});
-};
-
-RegistryService.prototype.createResource = function(name, path, isDirectory){
-	var url = new UriBuilder().path((this.registryServiceUrl+path).split('/')).path(name).build();
-	if(isDirectory)
-		url+="/";
-	return this.$http.post(url)
-			.then(function(response){
-				var resourcePath = response.headers('location');
-				return this.$http.get(resourcePath, {headers: { 'describe': 'application/json'}})
-					.then(function(response){ return response.data});
-			}.bind(this))
-			.catch(function(response) {
-				var msg;
-				if(response.data && response.data.error)
-					msg = response.data.error;
-				else 
-					msg = response.data || response.statusText || 'Unspecified server error. HTTP Code ['+response.status+']';
-				throw msg;
-			});	
-};
 RegistryService.prototype.remove = function(resourcepath){
 	var url = new UriBuilder().path(this.registryServiceUrl.split('/')).path(resourcepath.split('/')).build();
 	return this.$http['delete'](url);
@@ -321,7 +290,7 @@ RegistryTreeAdapter.prototype.refresh = function(node, keepState){
 					this.jstree.refresh();
 			}.bind(this));
 };
-RepositoryTreeAdapter.prototype.inspect = function(resource){
+RegistryTreeAdapter.prototype.inspect = function(resource){
 	this.$messageHub.announceResourceOpen(resource);
 }
 
@@ -344,12 +313,13 @@ angular.module('registry', ['registry.config'])
 .factory('$messageHub', [function(){
 	var messageHub = new FramesMessageHub();	
 	var send = function(evtName, data, absolute){
-		messageHub.post({data: data}, 'registry.' + evtName);	
+		messageHub.post({data: data}, 'repository.' + evtName);	
 	};
 	var announceResourceSelected = function(resourceDescriptor){
 		this.send('resource.selected', resourceDescriptor);
 	};
 	var announceResourceOpen = function(resourceDescriptor){
+		resourceDescriptor.path = resourceDescriptor.path.replace('/registry/', '/registry/public/');
 		this.send('resource.open', resourceDescriptor);
 	};
 	var announceResourceDeleted = function(resourceDescriptor){
@@ -359,7 +329,6 @@ angular.module('registry', ['registry.config'])
 	return {
 		send: send,
 		announceResourceSelected: announceResourceSelected,
-		announceResourceCreated: announceResourceCreated,
 		announceResourceOpen: announceResourceOpen,
 		announceResourceDeleted: announceResourceDeleted
 	};
@@ -444,11 +413,11 @@ angular.module('registry', ['registry.config'])
 						"action": function(data){
 							var tree = $.jstree.reference(data.reference);
 							var node = tree.get_node(data.reference);
-							tree.element.trigger('jstree.repository.inspect', [node.original._resource]);
+							tree.element.trigger('jstree.registry.inspect', [node.original._resource]);
 						}.bind(this)
 					}
 				} else {
-					delete ctxmenu.create.action;
+					delete ctxmenu.create;
 				}										
 				ctxmenu.remove.shortcut = 46;
 				ctxmenu.remove.shortcut_label = 'Del';
