@@ -31,11 +31,10 @@ UriBuilder.prototype.path = function(_pathSegments){
 		});
 	this.pathSegments = this.pathSegments.concat(_pathSegments);
 	return this;
-}
+};
 UriBuilder.prototype.build = function(){
-	var uriPath = '/'+this.pathSegments.join('/');
-	return uriPath;
-}
+	return this.pathSegments.join('/');
+};
 
 /**
  * Registry Service API delegate
