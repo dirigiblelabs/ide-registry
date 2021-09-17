@@ -8,14 +8,13 @@
  * Contributors:
  *   SAP - initial API and implementation
  */
-exports.getView = function() {
-	var view = {
-			"id":"registry",
-			"name":"Registry",
-			"factory":"frame",
-			"region":"left-top",
-			"label":"Registry",
-			"link":"../ide-registry/registry.html"
+exports.getView = function () {
+	return {
+		"id": "registry",
+		"name": "Registry",
+		"factory": "frame",
+		"region": "left-top",
+		"label": "Registry",
+		"link": "../ide-registry/registry.html"
 	};
-	return view;
 }
