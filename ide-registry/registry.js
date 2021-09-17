@@ -32,9 +32,10 @@ UriBuilder.prototype.path = function (_pathSegments) {
 	this.pathSegments = this.pathSegments.concat(_pathSegments);
 	return this;
 };
-UriBuilder.prototype.build = function () {
+UriBuilder.prototype.build = function (isBasePath = true) {
+	if (isBasePath) return '/' + this.pathSegments.join('/');
 	return this.pathSegments.join('/');
-};
+}
 
 /**
  * Registry Service API delegate
@@ -402,7 +403,7 @@ angular.module('registry', ['registry.config'])
 				},
 				'duplicate': function (name, counter, node, typesConfig) {
 					let typeCfg = typesConfig[node.type] || typesConfig['default'];
-					let name = typeCfg.default_name || typesConfig['default'].default_name || 'resource';
+					name = typeCfg.default_name || typesConfig['default'].default_name || 'resource';
 					let tmplName = typeCfg.template_new_name || typesConfig['default'].template_new_name || '{name}{counter}{ext}';
 					let parameters = {
 						'{name}': name,
