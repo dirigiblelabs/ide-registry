@@ -381,7 +381,7 @@ angular.module('registry', ['registry.config'])
 					return true;
 				}
 			},
-			'plugins': ['state', 'dnd', 'sort', 'types', 'contextmenu', 'unique'],
+			'plugins': ['state', 'sort', 'types', 'contextmenu', 'unique'],
 			'unique': {
 				'newNodeName': function (node, typesConfig) {
 					let typeCfg = typesConfig[node.type] || typesConfig['default'];
